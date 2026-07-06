@@ -6,11 +6,16 @@ passport identity so a scan opens it with no account and (for the app) no
 network:
 
   * default — a URL that *degrades gracefully*:
-        https://openvehiclepassport.org/p/<uuid>
+        https://<base-url>/p/<uuid>
     A generic phone camera opens the URL (cloud resolves it, or serves a
     "get the app" page); OpenDiag recognises the `/p/<uuid>` path and opens
     the local passport offline. Git-vs-GitHub: the id works without the host.
   * `--bare` — the pure identity, `urn:ovpf:<uuid>`, no host dependency.
+
+The base URL is deliberately not hardcoded to a single "canonical" domain
+-- any Provider can host the viewer that resolves `/p/<uuid>`. Default is
+whatever the reference AWS provider is running on (override with
+--base-url or $OVPF_BASE_URL for your own Provider).
 
 Uses **segno** (pure-Python, zero-deps) so generation works fully offline.
 
@@ -18,6 +23,7 @@ Uses **segno** (pure-Python, zero-deps) so generation works fully offline.
   python3 qr.py new                         # mint a passport + print its QR (SVG)
   python3 qr.py urn:ovpf:<uuid> -o car.svg  # QR for an existing passport
   python3 qr.py <uuid> --png -o car.png
+  python3 qr.py new --base-url https://passport.example.com
 """
 import argparse
 import os
@@ -27,7 +33,8 @@ import uuid as _uuid
 
 import segno
 
-URL_PREFIX = "https://openvehiclepassport.org/p"
+DEFAULT_URL_PREFIX = os.environ.get(
+    "OVPF_BASE_URL", "https://passport.skoor.ee") + "/p"
 
 
 def mint_uuid():
@@ -44,14 +51,14 @@ def _uuid_of(token):
     return token.rsplit("/", 1)[-1].replace("urn:ovpf:", "")
 
 
-def payload(token, bare=False):
+def payload(token, bare=False, url_prefix=DEFAULT_URL_PREFIX):
     u = _uuid_of(token)
-    return f"urn:ovpf:{u}" if bare else f"{URL_PREFIX}/{u}"
+    return f"urn:ovpf:{u}" if bare else f"{url_prefix}/{u}"
 
 
-def make_qr(token, bare=False):
+def make_qr(token, bare=False, url_prefix=DEFAULT_URL_PREFIX):
     # error='m' (~15% recovery) survives a scuffed under-hood sticker.
-    return segno.make(payload(token, bare), error="m")
+    return segno.make(payload(token, bare, url_prefix), error="m")
 
 
 def main(argv):
@@ -60,12 +67,16 @@ def main(argv):
     ap.add_argument("-o", "--out", help="output file (.svg default, or .png)")
     ap.add_argument("--png", action="store_true", help="write PNG instead of SVG")
     ap.add_argument("--bare", action="store_true", help="encode urn:ovpf:<uuid> (no URL)")
+    ap.add_argument("--base-url", default=os.environ.get("OVPF_BASE_URL", "https://passport.skoor.ee"),
+                     help="viewer base URL, e.g. https://passport.example.com "
+                          "(default: $OVPF_BASE_URL or https://passport.skoor.ee)")
     args = ap.parse_args(argv)
 
     token = mint_uuid() if args.token == "new" else args.token
     u = _uuid_of(token)
-    qr = make_qr(token, bare=args.bare)
-    encoded = payload(token, bare=args.bare)
+    url_prefix = args.base_url.rstrip("/") + "/p"
+    qr = make_qr(token, bare=args.bare, url_prefix=url_prefix)
+    encoded = payload(token, bare=args.bare, url_prefix=url_prefix)
 
     if args.out or args.png:
         out = args.out or f"passport-{u}.{'png' if args.png else 'svg'}"
