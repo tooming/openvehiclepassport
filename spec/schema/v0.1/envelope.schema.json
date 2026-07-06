@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openvehiclepassport.org/schema/v0.1/envelope.schema.json",
+  "title": "OVPF event envelope (v0.1 draft)",
+  "type": "object",
+  "required": ["@context", "id", "type", "specVersion", "vehicle",
+              "occurredAt", "recordedAt", "producer", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "@context": {
+      "description": "OVPF context IRI (or inline context object).",
+      "type": ["string", "object"]
+    },
+    "id": {
+      "description": "UUIDv7 as a URN.",
+      "type": "string",
+      "pattern": "^urn:uuid:[0-9a-fA-F-]{36}$"
+    },
+    "type": {
+      "description": "Event type: an ovpf: term or a namespaced extension.",
+      "type": "string",
+      "examples": ["PassportOpened", "DiagnosticTroubleCodeRead",
+                   "ServicePerformed", "x-bmw:EcuCodingChanged"]
+    },
+    "specVersion": { "type": "string", "const": "0.1" },
+    "vehicle": {
+      "description": "Subject passport IRI.",
+      "type": "string",
+      "pattern": "^urn:(vin:[A-HJ-NPR-Z0-9]{1,17}|ovpf:[0-9a-fA-F-]{36})$"
+    },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "producer": {
+      "type": "object",
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "enum": ["Diagnostic", "Maintenance", "Manual", "AI", "Import"] },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "device": { "type": "string" },
+        "operator": { "type": "string" }
+      }
+    },
+    "data": { "type": "object" },
+    "corrects": { "type": "string", "pattern": "^urn:uuid:[0-9a-fA-F-]{36}$" },
+    "correctionReason": { "type": "string" },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "hash"],
+        "properties": {
+          "name": { "type": "string" },
+          "mediaType": { "type": "string" },
+          "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "uri": { "type": "string" }
+        }
+      }
+    },
+    "prevHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "dependentRequired": { "corrects": ["correctionReason"] }
+}
