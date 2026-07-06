@@ -9,11 +9,14 @@ Usage:
   python3 ovpf.py --json PASSPORT.ovpf.ndjson   # derived state as JSON
   python3 ovpf.py --seal PASSPORT.ovpf.ndjson   # (re)compute the hash-chain in place
   python3 ovpf.py --merge A.ndjson B.ndjson     # reconcile two copies -> merged, sealed
+  python3 ovpf.py --sync PASSPORT.ovpf.ndjson --provider https://api.example.com
+                                                 # push/pull against a cloud provider
 """
 import json
 import sys
 
 import ovpf_core
+import sync as _sync
 
 # re-export for tests / callers that import from ovpf
 canonicalize = ovpf_core.canonicalize
@@ -60,11 +63,37 @@ def _format(s):
     return "\n".join(out)
 
 
+def _extract_options(argv, names):
+    """Pull `--name value` pairs out of argv; return (values, remaining)."""
+    values, remaining, i = {}, [], 0
+    while i < len(argv):
+        if argv[i] in names and i + 1 < len(argv):
+            values[argv[i][2:]] = argv[i + 1]
+            i += 2
+        else:
+            remaining.append(argv[i])
+            i += 1
+    return values, remaining
+
+
 def main(argv):
+    options, argv = _extract_options(argv, {"--provider", "--id", "--token"})
     flags = {a for a in argv if a.startswith("--")}
     args = [a for a in argv if not a.startswith("--")]
     if not args:
         raise SystemExit(__doc__)
+
+    if "--sync" in flags:
+        if "provider" not in options:
+            raise SystemExit("--sync requires --provider <url>")
+        result = _sync.sync(args[0], options["provider"].rstrip("/"),
+                             passport_id=options.get("id"), token=options.get("token"))
+        print(f"passport {result['passport_id']}")
+        print(f"pushed {result['pushed']}, pulled {result['pulled']}, "
+              f"total {result['total_events']} event(s)")
+        for err in result["errors"]:
+            print(f"  ! {err}", file=sys.stderr)
+        return
 
     if "--merge" in flags:
         merged, conflicts = merge(*[load(p) for p in args])

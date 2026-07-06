@@ -4,3 +4,5 @@ __pycache__/
 BRIEF.md
 _site/
 .jekyll-cache/
+*.egg-info/
+*.writetoken
