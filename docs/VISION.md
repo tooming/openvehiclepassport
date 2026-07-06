@@ -1,3 +1,7 @@
+---
+title: Vision
+---
+
 # Vision
 
 ## The question changed

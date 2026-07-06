@@ -1,3 +1,7 @@
+---
+title: Manifesto
+---
+
 # The OVP Principles
 
 Short enough to remember. Each one has teeth — it should be possible to

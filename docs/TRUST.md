@@ -1,3 +1,7 @@
+---
+title: Trust
+---
+
 # Trust
 
 ## The constraint that shapes everything else
