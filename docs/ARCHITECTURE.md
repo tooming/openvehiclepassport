@@ -78,6 +78,36 @@ corrupting the other two — which is the entire reason Matrix-style
 federation and event sourcing both landed on very similar shapes
 independently.
 
+## Storage is an implementation detail, not part of the protocol
+
+OVPF defines the **representation and exchange** of vehicle history — the
+event envelope, the hash chain, the fold to derived state (`EVENTS.md`).
+It deliberately does not define how a Provider stores that history
+internally. A Provider is free to back a passport with a relational
+database, an object store, an event-sourcing engine, or a bare git
+repository per vehicle — as long as it can answer the same three
+questions any other Provider answers: what are the events, are they
+intact, and how do I get a copy.
+
+This is a deliberate boundary, not an oversight. The moment the spec
+prefers one storage engine, "any provider can host a passport" quietly
+becomes "any provider that also runs Postgres/DynamoDB/git can host a
+passport" — which is exactly the kind of accidental lock-in OVP exists
+to avoid. Providers competing on service quality (`TRUST.md`) only
+works if storage stays out of scope entirely.
+
+Git in particular is worth naming explicitly, because it's an obvious
+and genuinely tempting fit: immutable history, hash-chained commits,
+signing, cloning, and offline-first are most of what OVPF needs, for
+free. It's also a plausible storage engine for a specific reference
+Provider to prototype (see `ROADMAP.md`) — but that's a choice made at
+the Provider layer, evaluated like any other storage engine, not a
+protocol requirement. Git's unit of history is a file; OVPF's unit of
+history is an event. Where those two models rub against each other
+(mutable derived state vs. immutable facts, binary attachments at
+scale, querying "all brake replacements") is exactly the kind of
+friction a protocol shouldn't force every Provider to inherit.
+
 ## Relationship to OpenDiag today
 
 OpenDiag's existing local-first diagnostics data (snapshots, traces,
