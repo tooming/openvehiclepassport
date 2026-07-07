@@ -36,7 +36,13 @@ def _infer_passport_id(events):
 
 
 def _request(method, url, body=None):
-    headers = {"content-type": "application/json"}
+    # urllib's default User-Agent ("Python-urllib/3.x") gets a flat 403
+    # (error code 1010) from Cloudflare's bot-fight-mode on
+    # ovp-provider-cloudflare -- found live, syncing a real passport.
+    # Any client using urllib's default would be silently blocked, so
+    # this is a real client-side fix, not a workaround for a test-only
+    # problem.
+    headers = {"content-type": "application/json", "user-agent": "ovpf-sync/0.4"}
     data = json.dumps(body).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:

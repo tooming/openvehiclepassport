@@ -23,6 +23,13 @@ Initial published draft: envelope schema, JSON-LD context, format sketch.
 
 ## ovpf (reference Python implementation)
 
+### ovpf-python-v0.4.1 — 2026-07-07
+- Fix `sync.py` sending no `User-Agent` header: urllib's default
+  (`Python-urllib/3.x`) gets a flat 403 (Cloudflare error 1010,
+  bot-fight-mode) from ovp-provider-cloudflare. Found live, syncing a
+  real passport -- any client using urllib's default would have been
+  silently blocked from that provider. Now sends `ovpf-sync/0.4`.
+
 ### ovpf-python-v0.4.0 — 2026-07-07
 - POC MODE: `sync.py` no longer sends or expects a write-capability
   token -- both reference providers (ovp-provider-aws,
