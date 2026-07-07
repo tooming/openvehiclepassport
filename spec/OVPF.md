@@ -103,7 +103,7 @@ Every event is a JSON-LD object sharing this envelope. Payload lives in `data`.
 | `vehicle` | ✓ | IRI | Subject passport — always `urn:ovpf:<uuid>` (the QR-encoded id). VIN is optional data, never the identity (§2a). |
 | `occurredAt` | ✓ | ISO 8601 | When the real-world event happened (with timezone/offset). |
 | `recordedAt` | ✓ | ISO 8601 | When it was appended to the log. (Event time ≠ record time.) |
-| `producer` | ✓ | object | What emitted it: `{ type, name, version, device?, operator? }`. `type ∈ {Diagnostic, Maintenance, Manual, AI, Import}`. |
+| `producer` | ✓ | object | What emitted it: `{ type, name, version, device?, operator?, domain?, verified?, verifiedAt? }`. `type ∈ {Diagnostic, Maintenance, Manual, AI, Import, Workshop}`. `domain` is a producer's self-declared identity claim (e.g. `"skoor.ee"`); `verified`/`verifiedAt` are set *only* by the provider that received the event, from its own workshop registry (§4a) — never trust a client-supplied `verified`. |
 | `data` | ✓ | object | Event-type-specific payload (§4). |
 | `corrects` | – | `urn:uuid:` | The event this supersedes. Pair with `correctionReason`. |
 | `attachments` | – | array | Content-addressed blobs: `{ name, mediaType, hash: "sha256:…", uri? }`. Binary stays out of the log, referenced immutably. |
@@ -162,6 +162,29 @@ It emerges, layered on the integrity floor:
 The vehicle never needs any of this; it stays anonymous. Signatures are a
 property of *producers*, added only by those who want their contributions
 trusted.
+
+**Domain verification, implemented (both reference providers):** a workshop
+proves control of a domain the same way ACME/Let's Encrypt does — a DNS TXT
+record, checked by the provider itself, no human in the loop:
+
+```
+POST /v1/workshops              { domain, name }        -> mints a token
+                                 returns a dnsRecord: { type: TXT,
+                                 name: "_ovp-verify.<domain>",
+                                 value: "ovp-verify=<token>" }
+POST /v1/workshops/{domain}/verify                       -> checks DNS now
+                                 (idempotent -- call again as DNS propagates)
+GET  /v1/workshops/{domain}                              -> current status
+```
+
+The check itself is a DNS-over-HTTPS lookup (no DNS library dependency on
+either provider). Once verified, `append_event`/`appendEvent` stamps
+`producer.verified: true` on any event whose `producer.domain` matches —
+looked up server-side at write time, baked into the hash immediately, and
+never re-derived later (a workshop losing verified status doesn't
+retroactively change what it attested when it signed). Each provider keeps
+its own workshop registry; verifying with one provider doesn't verify with
+another, by design — there's no shared trust authority to bootstrap.
 
 Notes:
 - The **Diagnostic** rows are exactly what `kline-diag` already produces —

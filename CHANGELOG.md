@@ -7,6 +7,15 @@ Two independent version axes: the **spec** (`spec/schema`, `spec/context`,
 
 ## spec
 
+### spec-v0.1.2 — 2026-07-07
+- Document domain-verified workshop provenance normatively:
+  `producer.domain`/`verified`/`verifiedAt` (§3), and the DNS-TXT
+  verification flow implemented on both reference providers (§4a).
+  `verified` is server-stamped at write time from the provider's own
+  workshop registry, never a client claim -- matches the "machine
+  check, never manual approval" principle already in docs/TRUST.md,
+  now actually built and deployed instead of just described.
+
 ### spec-v0.1.1 — 2026-07-07
 - Document the canonical number-formatting rule explicitly
   (`spec/OVPF.md` §7): numbers use ECMAScript `Number::toString`, so a
@@ -22,6 +31,14 @@ Two independent version axes: the **spec** (`spec/schema`, `spec/context`,
 Initial published draft: envelope schema, JSON-LD context, format sketch.
 
 ## ovpf (reference Python implementation)
+
+### ovpf-python-v0.5.0 — 2026-07-07
+- `reduce()`'s timeline entries now include `producerDomain` and
+  `producerVerified`, not just `producer` (name) -- needed so a UI can
+  render a "verified workshop" badge without re-parsing raw events.
+  Matches the JS port (ovp-provider-cloudflare's ovpf-core.js) exactly;
+  conformance fixture regenerated and cross-language equality
+  reverified.
 
 ### ovpf-python-v0.4.1 — 2026-07-07
 - Fix `sync.py` sending no `User-Agent` header: urllib's default

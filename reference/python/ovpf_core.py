@@ -294,9 +294,17 @@ def reduce(events):
 
     for ev in live:
         t, d = ev.get("type"), ev.get("data", {})
+        p = ev.get("producer") or {}
         state["timeline"].append({
             "at": ev.get("occurredAt"), "type": t,
-            "producer": (ev.get("producer") or {}).get("name")})
+            "producer": p.get("name"),
+            # Domain-verified provenance (see docs/TRUST.md) -- stamped by
+            # a provider onto the event at write time, never client-
+            # asserted (see ovp-provider-aws/src/app.py's append_event).
+            # Surfaced here so any UI can show a "verified workshop" badge
+            # without re-deriving it from the raw producer object.
+            "producerDomain": p.get("domain"),
+            "producerVerified": bool(p.get("verified"))})
 
         od = _odometer_of(ev)
         if od and (state["mileage"] is None or od[0] > state["mileage"]["value"]):
