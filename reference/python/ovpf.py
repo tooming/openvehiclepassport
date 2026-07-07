@@ -77,7 +77,7 @@ def _extract_options(argv, names):
 
 
 def main(argv):
-    options, argv = _extract_options(argv, {"--provider", "--id", "--token"})
+    options, argv = _extract_options(argv, {"--provider", "--id"})
     flags = {a for a in argv if a.startswith("--")}
     args = [a for a in argv if not a.startswith("--")]
     if not args:
@@ -87,7 +87,7 @@ def main(argv):
         if "provider" not in options:
             raise SystemExit("--sync requires --provider <url>")
         result = _sync.sync(args[0], options["provider"].rstrip("/"),
-                             passport_id=options.get("id"), token=options.get("token"))
+                             passport_id=options.get("id"))
         print(f"passport {result['passport_id']}")
         print(f"pushed {result['pushed']}, pulled {result['pulled']}, "
               f"total {result['total_events']} event(s)")

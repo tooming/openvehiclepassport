@@ -23,6 +23,15 @@ Initial published draft: envelope schema, JSON-LD context, format sketch.
 
 ## ovpf (reference Python implementation)
 
+### ovpf-python-v0.4.0 — 2026-07-07
+- POC MODE: `sync.py` no longer sends or expects a write-capability
+  token -- both reference providers (ovp-provider-aws,
+  ovp-provider-cloudflare) dropped write access control entirely for
+  easier POCing, not just stopped enforcing it. `ovpf --sync` no
+  longer accepts `--token`, and no `.writetoken` sidecar file is
+  written. This is a temporary simplification, not the intended
+  posture -- see the provider READMEs' Auth sections.
+
 ### ovpf-python-v0.3.0 — 2026-07-07
 - Fix `canonicalize()`: custom recursive serializer replacing
   `json.dumps`, matching ECMAScript number formatting (see spec
