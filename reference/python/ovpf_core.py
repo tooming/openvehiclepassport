@@ -25,10 +25,50 @@ SPEC_VERSION = "0.1"
 
 # --- canonicalization + hashing (pragmatic RFC 8785 JCS subset) ------------
 
+def _canon_number(n):
+    """RFC 8785 mandates ECMAScript's Number::toString for JSON numbers --
+    critically, a whole-number float has no ".0": (45.0).toString() === "45"
+    in JS, but Python's json.dumps(45.0) == "45.0". Left alone, a Python
+    producer and a JS producer would hash the *same* logical event to
+    *different* bytes the moment a number field (price, a float odometer)
+    happens to be a whole number. This must match any other conformant
+    implementation's number formatting, or cross-provider verification
+    silently breaks -- see conformance/fixtures for the shared vectors."""
+    if isinstance(n, int):
+        return str(n)
+    if n != n or n in (float("inf"), float("-inf")):
+        raise ValueError(f"{n!r} has no canonical JSON representation")
+    if n == int(n) and abs(n) < 1e21:
+        return str(int(n))
+    return repr(n)
+
+
+def _canon(obj):
+    if obj is None:
+        return "null"
+    if obj is True:
+        return "true"
+    if obj is False:
+        return "false"
+    if isinstance(obj, (int, float)):
+        return _canon_number(obj)
+    if isinstance(obj, str):
+        return json.dumps(obj, ensure_ascii=False)
+    if isinstance(obj, list):
+        return "[" + ",".join(_canon(v) for v in obj) + "]"
+    if isinstance(obj, dict):
+        items = sorted(obj.items(), key=lambda kv: kv[0])
+        return "{" + ",".join(
+            json.dumps(k, ensure_ascii=False) + ":" + _canon(v) for k, v in items
+        ) + "}"
+    raise TypeError(f"{type(obj)} has no canonical JSON representation")
+
+
 def canonicalize(obj):
-    """Deterministic JSON bytes: sorted keys, compact separators, UTF-8."""
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+    """Deterministic JSON bytes: sorted keys, compact separators, UTF-8,
+    and number formatting that matches any ECMAScript-based implementation
+    (see _canon_number)."""
+    return _canon(obj).encode("utf-8")
 
 
 def event_hash(event):

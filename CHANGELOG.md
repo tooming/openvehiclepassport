@@ -7,10 +7,28 @@ Two independent version axes: the **spec** (`spec/schema`, `spec/context`,
 
 ## spec
 
+### spec-v0.1.1 — 2026-07-07
+- Document the canonical number-formatting rule explicitly
+  (`spec/OVPF.md` §7): numbers use ECMAScript `Number::toString`, so a
+  whole-number float has no `.0`. Found while porting to a second
+  language (JS/Cloudflare) -- Python's default JSON float formatting
+  disagreed with JS's, which would have silently broken cross-provider
+  hash verification the first time any event had a "clean" numeric
+  field (a price, a whole-number reading). Added
+  `conformance/fixtures/canonicalization.json` as the shared test
+  vectors for this.
+
 ### spec-v0.1.0 — 2026-07-07
 Initial published draft: envelope schema, JSON-LD context, format sketch.
 
 ## ovpf (reference Python implementation)
+
+### ovpf-python-v0.3.0 — 2026-07-07
+- Fix `canonicalize()`: custom recursive serializer replacing
+  `json.dumps`, matching ECMAScript number formatting (see spec
+  v0.1.1). Re-sealed `examples/e39-passport.ovpf.ndjson` and the
+  matching conformance fixture, which both contained whole-number
+  floats hashed under the old (incorrect) formatting.
 
 ### ovpf-python-v0.2.0 — 2026-07-07
 - Add `sync.py`: local <-> cloud reconciliation against an OVPF provider

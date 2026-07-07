@@ -199,7 +199,15 @@ later event's `corrects`, and using the correcting event instead.
 - **Passport = NDJSON** (`.ovpf.ndjson`): one envelope per line, append-only.
   Trivial to stream, tail, and merge; git-friendly.
 - Canonical hashing (for `hash`/`prevHash`) uses **RFC 8785 JCS** over the
-  envelope with `hash` removed.
+  envelope with `hash` removed: object keys sorted, compact separators,
+  UTF-8 (no `\uXXXX` escaping of non-ASCII). **Numbers use ECMAScript's
+  `Number::toString`** — a whole-number float has no `.0` (`45.0` canon-
+  icalizes as `45`, matching `(45.0).toString()` in JS). This bit
+  everyone: a naive Python `json.dumps` keeps the `.0` and hashes
+  differently from a JS implementation for the exact same logical event.
+  Any implementation MUST match this, not its own language's default
+  number formatting, or cross-provider verification silently breaks. See
+  `conformance/fixtures` for shared test vectors covering this.
 - Merging two offline copies: union by `id`, order by (`occurredAt`, UUIDv7).
 
 ## 8. Open questions (to resolve before v0.1 freeze)

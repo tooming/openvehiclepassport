@@ -186,11 +186,38 @@ GOLDEN_EVENT = {
 GOLDEN_HASH = "sha256:d0ffd8834939e26b423e12111dfbd606b0c228907c1268cc24c9c8f51335734f"
 
 
+GOLDEN_EVENT_WHOLE_FLOAT = {
+    "@context": "https://openvehiclepassport.org/ns/v0.1",
+    "id": "urn:uuid:018f3a1b-0000-7000-8000-0000000000bb",
+    "type": "ServicePerformed", "specVersion": "0.1", "vehicle": "urn:ovpf:x",
+    "occurredAt": "2026-01-01T00:00:00Z", "recordedAt": "2026-01-01T00:00:00Z",
+    "producer": {"type": "Manual", "name": "t"},
+    "data": {"serviceType": "Changed engine oil",
+             "total": {"price": 45.0, "currency": "EUR"}}}
+GOLDEN_HASH_WHOLE_FLOAT = \
+    "sha256:ad12173a82a676b757a209665aa203d01f6153bcf8c66ac8985d33d8be0ae334"
+
+
 class TestWireFormat(unittest.TestCase):
     """Guards the canonical hash — any change here breaks cross-implementation
     compatibility, so it must be deliberate (bump the constant knowingly)."""
     def test_golden_hash(self):
         self.assertEqual(ovpf.event_hash(dict(GOLDEN_EVENT)), GOLDEN_HASH)
+
+    def test_whole_number_float_matches_ecmascript_formatting(self):
+        # RFC 8785 mandates ECMAScript Number::toString: (45.0).toString()
+        # is "45", not "45.0" -- Python's json.dumps(45.0) gets this wrong.
+        # A JS implementation hashing the same logical event MUST agree with
+        # this exact hash, or cross-provider verification silently breaks.
+        self.assertEqual("45", ovpf.canonicalize(45.0).decode())
+        self.assertEqual(
+            ovpf.event_hash(dict(GOLDEN_EVENT_WHOLE_FLOAT)),
+            GOLDEN_HASH_WHOLE_FLOAT)
+
+    def test_canonicalize_sorts_keys_and_is_compact(self):
+        self.assertEqual(
+            b'{"a":[45,true,null,"x"],"b":1}',
+            ovpf.canonicalize({"b": 1, "a": [45.0, True, None, "x"]}))
 
 
 if __name__ == "__main__":
