@@ -1,19 +1,24 @@
 # Open Vehicle Passport (OVP)
 
-This directory is the seed of something bigger than OpenDiag: an open,
-implementation-neutral protocol for recording the lifetime history of a
-vehicle.
-
-OpenDiag is a BMW K-line diagnostics application. OVP is not that. OVP is
-the idea that the *events* a vehicle accumulates over its life — oil
+OVP is an open, implementation-neutral protocol for recording the lifetime
+history of a vehicle: the *events* it accumulates over its life — oil
 changes, diagnostic sessions, dyno runs, ECU tunes, ownership transfers —
-belong to a shared, open format that any application can read and write.
-OpenDiag is planned to become one producer and consumer of that format,
-and its cloud offering one *provider* among many that could exist.
+as a shared, append-only format that any application can read and write.
 
-There is no code here yet, intentionally. These documents capture the
-philosophy and architecture while it's fresh, before any schema gets
-frozen prematurely.
+No single company owns a vehicle's history. Any producer can write events,
+any provider can host them, and any consumer can read them, as long as
+they speak the format. This repo is that format's spec, its reference
+Python implementation, and the philosophy behind it — the protocol layer
+the rest of the ecosystem builds on:
+
+- [OpenDiag](https://github.com/tooming/opendiag) — a BMW K-line
+  diagnostics application, and the reference implementation of OVPF: the
+  first producer/consumer built against this protocol.
+- [ovp-provider-aws](https://github.com/tooming/ovp-provider-aws) — a
+  serverless provider (Lambda, DynamoDB, API Gateway, CloudFront).
+- [ovp-provider-cloudflare](https://github.com/tooming/ovp-provider-cloudflare) —
+  a second, independent provider (Workers, KV), in a different language,
+  proving the protocol isn't tied to one stack.
 
 ## Reading order
 
@@ -33,6 +38,12 @@ frozen prematurely.
    a central gatekeeper.
 8. [`docs/ROADMAP.md`](docs/ROADMAP.md) — the order in which this gets
    built, starting from OpenDiag as the reference implementation.
+9. [`spec/OVPF.md`](spec/OVPF.md) — the normative format spec: event
+   envelope, canonicalization, hash-chaining, producer verification.
+10. [`reference/python`](reference/python) and
+    [`conformance/fixtures`](conformance/fixtures) — a working
+    implementation and the shared test vectors any other one (JS, Rust,
+    whatever) has to match.
 
 ## Two names, one project
 
@@ -41,5 +52,6 @@ frozen prematurely.
 - **OVPF** — *Open Vehicle Passport Format*. The technical
   specification: schemas, event formats, APIs, export/import.
 
-OpenDiag will be the reference implementation of OVPF. It is not the
-protocol, and it should not need to be for the protocol to matter.
+OpenDiag is the reference implementation of OVPF — proof the protocol
+works, not the protocol itself. Anyone can build another one against the
+same spec.
