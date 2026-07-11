@@ -14,11 +14,8 @@ the rest of the ecosystem builds on:
 - [OpenDiag](https://github.com/tooming/opendiag) — a BMW K-line
   diagnostics application, and the reference implementation of OVPF: the
   first producer/consumer built against this protocol.
-- [ovp-provider-aws](https://github.com/tooming/ovp-provider-aws) — a
-  serverless provider (Lambda, DynamoDB, API Gateway, CloudFront).
 - [ovp-provider-cloudflare](https://github.com/tooming/ovp-provider-cloudflare) —
-  a second, independent provider (Workers, KV), in a different language,
-  proving the protocol isn't tied to one stack.
+  a reference provider (Workers, KV).
 
 ## Reading order
 
